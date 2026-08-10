@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Phishing Module</title>
+<style>
+:root{--ink:#10233a;--sea:#0f766e;--mint:#0ea5a4;--sand:#fdf6e3;--sun:#d97706;--sky:#e0f2fe;--card:#ffffff;--line:#cbd5e1;--ok:#166534;--warn:#9a3412}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Avenir Next","Trebuchet MS","Segoe UI",sans-serif;background:radial-gradient(circle at 15% 10%,#fff8e7,transparent 35%),radial-gradient(circle at 85% 15%,#dbeafe,transparent 40%),linear-gradient(180deg,#f8fafc,#edf5ff 40%,#f7fdfc);color:#111827;line-height:1.55}
+.skip-link{position:absolute;left:-9999px;top:0;background:#111827;color:#fff;padding:10px 14px;border-radius:0 0 8px 8px;z-index:1000}
+.skip-link:focus{left:16px}
+header{background:linear-gradient(135deg,#0f172a,#114e59);color:#fff;padding:16px;position:sticky;top:0;z-index:100;box-shadow:0 6px 16px rgba(15,23,42,.2)}
+.header-inner{max-width:1100px;margin:auto;display:grid;gap:10px}
+.module-title{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.module-title h1{font-size:1.1rem;margin:0;letter-spacing:.02em}
+.module-meta-wrap{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.module-meta{font-size:.95rem;opacity:.95;background:rgba(255,255,255,.12);padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.3)}
+.module-meta.goal{background:rgba(20,184,166,.2)}
+.progress{height:12px;background:#26445d;border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,.2)}
+.bar{height:100%;background:linear-gradient(90deg,#2dd4bf,#67e8f9);transition:width .35s ease}
+.toolbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.jump{display:flex;align-items:center;gap:8px}
+.narration-controls{display:flex;align-items:center;gap:8px}
+.phase-rail{display:grid;grid-template-columns:repeat(6,minmax(100px,1fr));gap:8px;margin-top:4px}
+.phase-step{border:1px solid rgba(255,255,255,.35);border-radius:10px;padding:8px;background:rgba(255,255,255,.08);font-size:.8rem;line-height:1.25}
+.phase-step strong{display:block;font-size:.85rem}
+.phase-step.active{background:rgba(45,212,191,.25);border-color:#67e8f9}
+.phase-step.done{background:rgba(34,197,94,.2);border-color:#86efac}
+main{max-width:1100px;margin:auto;padding:24px}
+.screen{display:none}
+.active{display:block;animation:screenIn .35s ease both}
+@keyframes screenIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.hero,.card{background:var(--card);border-radius:18px;padding:24px;box-shadow:0 6px 24px rgba(15,23,42,.08);border:1px solid #e2e8f0}
+.hero{background:linear-gradient(135deg,#0f172a,#0b5a58);color:#fff;text-align:center}
+.hero p{max-width:850px;margin:0 auto 14px}
+.microcopy{font-size:.96rem;opacity:.95}
+.casefile{border-left:6px solid var(--sun);background:#fffbeb;padding:12px;border-radius:8px;margin-bottom:12px}
+button{padding:10px 14px;border:1px solid #0f172a;border-radius:10px;background:#0f172a;color:#fff;margin:4px;font-size:.96rem;cursor:pointer}
+button:hover{filter:brightness(1.1)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #22d3ee;outline-offset:2px}
+button.secondary{background:#fff;color:#0f172a}
+button.correct{background:#166534;border-color:#166534}
+button.incorrect{background:#b91c1c;border-color:#b91c1c}
+button:disabled{opacity:.85;cursor:not-allowed}
+.feedback{background:var(--sky);padding:10px;border-radius:10px;margin-top:8px;border:1px solid #bae6fd}
+.feedback.ok{background:#dcfce7;border-color:#86efac;color:#14532d}
+.feedback.warn{background:#ffedd5;border-color:#fdba74;color:#7c2d12}
+.nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap}
+.status-panel{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chip{background:#fff;border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:.9rem}
+.explain{margin-top:8px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:8px}
+.explain summary{cursor:pointer;font-weight:600}
+.tracker{margin-top:14px;border:1px dashed #94a3b8;border-radius:12px;padding:12px;background:#f8fafc}
+.tracker h3{margin:0 0 10px}
+.tracker p{margin:6px 0}
+.snapshot-box{margin-top:12px}
+.snapshot-box textarea{width:100%;min-height:180px;border:1px solid #94a3b8;border-radius:10px;padding:10px;font-family:"SF Mono","Menlo","Consolas",monospace;font-size:.9rem;background:#fff}
+.studio-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.studio-task{border:1px solid #cbd5e1;border-radius:12px;padding:12px;background:linear-gradient(180deg,#ffffff,#f8fafc)}
+.studio-task h3{margin:0 0 8px;font-size:1rem}
+.studio-task p{margin:0 0 8px}
+.studio-task .meta{font-size:.85rem;color:#334155}
+img{max-width:100%;border-radius:8px;border:1px solid #e2e8f0}
+input,select{padding:8px;border-radius:8px;border:1px solid #94a3b8;font-size:1rem;max-width:100%}
+label{font-weight:600}
+hr{border:none;border-top:1px solid #e2e8f0;margin:16px 0}
+@media print{
+	body{background:#fff}
+	header,.nav,.skip-link{display:none !important}
+	.screen{display:none !important}
+	.screen.active{display:block !important}
+}
+@media (max-width:780px){main{padding:16px}.hero,.card{padding:18px}.module-title h1{font-size:1rem}.toolbar{align-items:flex-start}.phase-rail{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+@media (prefers-reduced-motion:reduce){.active{animation:none}.bar{transition:none};body::before,body::after{animation:none}}
+
+body::before,body::after{content:"";position:fixed;inset:auto;pointer-events:none;z-index:0;filter:blur(70px);opacity:.45;border-radius:999px;animation:drift 16s ease-in-out infinite alternate}
+body::before{width:320px;height:320px;background:rgba(20,184,166,.18);top:-80px;right:-60px}
+body::after{width:280px;height:280px;background:rgba(59,130,246,.16);bottom:-80px;left:-60px;animation-duration:20s}
+body{position:relative;overflow-x:hidden}
+header{backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.12)}
+.hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#0f172a,#145d66 48%,#0f766e);color:#fff;text-align:center;box-shadow:0 18px 50px rgba(15,23,42,.16)}
+.hero::before{content:"";position:absolute;inset:-20% 10% auto auto;width:220px;height:220px;border-radius:999px;background:radial-gradient(circle,rgba(255,255,255,.25),transparent 70%);animation:spin 18s linear infinite;pointer-events:none}
+.hero::after{content:"";position:absolute;inset:auto auto -20% -10%;width:220px;height:220px;border-radius:999px;background:radial-gradient(circle,rgba(45,212,191,.2),transparent 70%);animation:spinReverse 22s linear infinite;pointer-events:none}
+.hero > *{position:relative;z-index:1}
+.hero-badges,.hero-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin:12px 0 8px}
+.hero-badge,.hero-stat{padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);font-size:.92rem;backdrop-filter:blur(8px)}
+.hero-visual{display:grid;place-items:center;margin:18px 0 8px}
+.hero-panel{max-width:720px;width:100%;display:flex;align-items:center;gap:16px;padding:16px;border-radius:18px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(10px)}
+.icon-bubble{width:64px;height:64px;display:grid;place-items:center;border-radius:18px;font-size:1.9rem;background:linear-gradient(135deg,#2dd4bf,#67e8f9);box-shadow:0 10px 25px rgba(2,8,23,.18);animation:float 3.2s ease-in-out infinite}
+.hero-panel strong{display:block;margin-bottom:4px;font-size:1rem}
+.hero-panel p{margin:0;font-size:.96rem;opacity:.95}
+.card{position:relative;overflow:hidden;transition:transform .25s ease,box-shadow .25s ease}
+.card:hover,.studio-task:hover,.phase-step:hover{transform:translateY(-3px);box-shadow:0 10px 20px rgba(15,23,42,.08)}
+.card::before{content:"";position:absolute;inset:0 auto auto 0;height:4px;width:100%;background:linear-gradient(90deg,#0f766e,#38bdf8);transform:scaleX(0);transform-origin:left;transition:transform .25s ease}
+.card:hover::before{transform:scaleX(1)}
+button{transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}
+button:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(15,23,42,.12)}
+.phase-step{transition:transform .2s ease,box-shadow .2s ease,background .2s ease}
+.phase-step.active{animation:pulse 2.2s ease-in-out infinite}
+.phase-step.done{box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.studio-task{transition:transform .2s ease,box-shadow .2s ease}
+.feedback{animation:fadePop .25s ease both}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:14px}
+.feature-tile{padding:14px;border-radius:14px;border:1px solid #e2e8f0;background:linear-gradient(180deg,#ffffff,#f8fafc);box-shadow:0 6px 16px rgba(15,23,42,.05)}
+.feature-tile .emoji{font-size:1.2rem;display:inline-block;margin-bottom:6px}
+.feature-tile strong{display:block;margin-bottom:4px}
+.feature-tile p{margin:0;font-size:.92rem;color:#475569}
+.screen.active .hero,.screen.active .card{animation:screenIn .45s ease both, liftIn .45s ease both}
+@keyframes liftIn{from{transform:translateY(8px)}to{transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(103,232,249,.25)}50%{box-shadow:0 0 0 8px rgba(103,232,249,0)}}
+@keyframes fadePop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(14px,-22px,0)}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes spinReverse{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#maincontent">Skip to module content</a>
+<header>
+<div class="header-inner">
+<div class="module-title">
+<h1>Recognizing and Avoiding Phishing Attacks</h1>
+<div class="module-meta-wrap">
+<div class="module-meta" id="eta">Estimated remaining: 60 min</div>
+<div class="module-meta" id="activeTime">Active time: 0 min</div>
+<div class="module-meta goal">Target engagement: 60+ min</div>
+</div>
+</div>
+<div id="label" aria-live="polite"></div>
+<div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+<div class="toolbar">
+<div class="jump">
+<label for="jumpTo">Jump to section:</label>
+<select id="jumpTo" aria-label="Jump to section"></select>
+</div>
+<div class="narration-controls">
+<button id="narrateToggle" class="secondary" onclick="toggleNarration()" aria-pressed="false">Narration: Off</button>
+<button class="secondary" onclick="speakCurrentScreen()">Read This Screen</button>
+</div>
+<div class="status-panel" aria-live="polite">
+<span class="chip" id="knowledge">Knowledge checks: 0/0</span>
+<span class="chip" id="streak">Current streak: 0</span>
+<span class="chip" id="studioProgress">Studio tasks: 0/4</span>
+<span class="chip" id="eventCount">Events logged: 0</span>
+</div>
+</div>
+<div class="phase-rail" id="phaseRail" aria-label="Learning journey phases"></div>
+</div>
+</header>
+<main id="maincontent" tabindex="-1">
+
+<section class="screen active"><div class="hero"><div class="hero-badges"><span class="hero-badge">🧠 Interactive Learning</span><span class="hero-badge">⏱ 60+ Minute Journey</span><span class="hero-badge">🛡 Safe Practice</span></div><h2>Think Before You Click</h2><p>Every day, cybercriminals use email, text messages, phone calls, and fake websites to trick people into revealing information, transferring money, or compromising workplace systems. Learn how to recognize phishing attempts, evaluate evidence, and respond safely.</p><div class="hero-visual"><div class="hero-panel"><div class="icon-bubble">🛡</div><div><strong>Pause. Verify. Report.</strong><p>Each screen builds an evidence-based habit that protects people, systems, and data.</p></div></div></div><div class="hero-stats"><span class="hero-stat">✅ 14 guided checks</span><span class="hero-stat">📚 Case-based scenarios</span><span class="hero-stat">📝 Reflective studio tasks</span></div><p class="microcopy">Tip: Use the Previous/Next buttons or keyboard arrows. Press Home for the first screen and End for the last screen.</p><p class="microcopy">This enhanced version includes guided practice to support at least one full hour of engaged learning.</p><button onclick="next()" aria-label="Start the module">Start Module</button></div></section>
+<section class="screen"><div class="card"><h2>How To Use</h2><p><strong>Estimated Time:</strong> 55–65 minutes</p><div class="feature-grid"><div class="feature-tile"><span class="emoji">🧭</span><strong>Navigate easily</strong><p>Move through screens with arrows, buttons, or the jump menu.</p></div><div class="feature-tile"><span class="emoji">🔎</span><strong>Assess evidence</strong><p>Review screenshots and decide what clues matter most.</p></div><div class="feature-tile"><span class="emoji">🛠️</span><strong>Practice safely</strong><p>Apply the STOP and verify approach before acting.</p></div><div class="feature-tile"><span class="emoji">🏁</span><strong>Finish with confidence</strong><p>Complete the studio and summative assessment at the end.</p></div></div></div></section>
+<section class="screen"><div class="card"><h2>Learning Objectives</h2><ul><li>Define phishing</li><li>Identify indicators</li><li>Distinguish messages</li><li>Apply verification</li></ul></div></section>
+<section class="screen"><div class="card"><h2>Why Phishing Matters</h2><p><strong>Workplace Example:</strong> An HR employee receives an urgent request to change an employee’s direct deposit information before payroll closes. The request appears legitimate, but it is fraudulent. The employee’s paycheck is redirected to a criminal-controlled account.</p><h3>Consequences for Individuals</h3><ul><li>Identity theft</li><li>Financial fraud</li><li>Account compromise</li></ul><h3>Consequences for Organizations</h3><ul><li>Payroll fraud</li><li>Data breaches</li><li>Operational disruption</li><li>Reputational damage</li></ul></div></section>
+<section class="screen"><div class="card"><h2>Poll</h2>
+<p>Have you ever received a suspicious email?</p>
+<button onclick="msg('poll','Many people receive phishing emails every week.')">Yes</button>
+<button onclick="msg('poll','Phishing attempts are extremely common. Stay alert.')">No</button>
+<button onclick="msg('poll','This module will help you recognize them.')">Not Sure</button>
+<div id="poll"></div></div></section>
+<section class="screen"><div class="card"><h2>What Is Phishing?</h2><p>Phishing is a social engineering attack that attempts to trick people into revealing information, clicking malicious links, opening harmful attachments, transferring money, or taking other unsafe actions.</p><h3>How Phishing Works</h3><ol><li>Attacker impersonates a trusted source</li><li>Message creates urgency or trust</li><li>Recipient takes action</li><li>Information, money, or access is compromised</li></ol></div></section>
+<section class="screen"><div class="card"><h2>Types of Phishing</h2><h3>Email Phishing</h3><p>Mass-distributed phishing emails.</p><h3>Spear Phishing</h3><p>Targeted messages aimed at specific individuals.</p><h3>Smishing</h3><p>Phishing attacks delivered through text messages.</p><h3>Vishing</h3><p>Phishing attacks delivered through phone calls.</p></div></section>
+<section class="screen"><div class="card"><h2>Formative Assessment #1</h2>
+<p>You receive a text message stating that your package delivery failed and that you must click a link within 24 hours to avoid cancellation. What type of phishing attack is being used?</p>
+<button onclick="checkAnswer('f1',false)">Email Phishing</button>
+<button onclick="checkAnswer('f1',false)">Spear Phishing</button>
+<button onclick="checkAnswer('f1',true)">Smishing</button>
+<button onclick="checkAnswer('f1',false)">Vishing</button>
+<div id="f1"></div></div></section>
+<section class="screen"><div class="card"><h2>Warning Signs</h2><h3>STOP and CHECK</h3><ul><li><strong>Urgency:</strong> Pressure to act immediately</li><li><strong>Unexpected Request:</strong> Especially involving money or credentials</li><li><strong>Suspicious Sender:</strong> Misspellings or unusual domains</li><li><strong>Links & Attachments:</strong> Unexpected files or destinations</li><li><strong>Sensitive Information Requests:</strong> Passwords or financial information</li><li><strong>Independent Verification:</strong> Verify through trusted channels</li></ul></div></section>
+<section class="screen"><div class="card"><div class="casefile">CASE FILE #1 Maria</div>
+<img src="images/maria-email.jpg" alt="Maria email">
+<p>Which indicator most strongly suggests this message may be phishing?</p>
+<button onclick="checkAnswer('maria',false)">Professional formatting</button>
+<button onclick="checkAnswer('maria',false)">Contains a logo</button>
+<button onclick="checkAnswer('maria',true)">Urgent account suspension warning</button>
+<button onclick="checkAnswer('maria',false)">References a bank</button>
+<div id="maria"></div></div></section>
+<section class="screen"><div class="card"><h2>Formative Assessment #2</h2>
+<p>An email claims your Microsoft account will be disabled within one hour unless you verify your password. Which warning sign is most concerning?</p>
+<button onclick="checkAnswer('f2',false)">Company logo</button>
+<button onclick="checkAnswer('f2',false)">Instructions in the email</button>
+<button onclick="checkAnswer('f2',true)">Urgency and pressure to act quickly</button>
+<button onclick="checkAnswer('f2',false)">Mention of Microsoft</button>
+<div id="f2"></div></div></section>
+<section class="screen"><div class="card"><div class="casefile">Package Investigation</div>
+<div style="display:flex;gap:20px;flex-wrap:wrap">
+<div style="flex:1;min-width:250px"><h3>Email A</h3><img src="images/package-scam.jpg" alt="Scam"></div>
+<div style="flex:1;min-width:250px"><h3>Email B</h3><img src="images/legitimate-package.jpg" alt="Legitimate"></div>
+</div>
+<p>Which email appears legitimate?</p>
+<button onclick="checkAnswer('pkg',false)">Email A</button>
+<button onclick="checkAnswer('pkg',true)">Email B</button>
+<div id="pkg"></div></div></section>
+<section class="screen"><div class="card"><div class="casefile">Maria Decision</div>
+<p><strong>Review the evidence before making your decision.</strong></p>
+<img src="images/maria-email.jpg" alt="Maria phishing email reference">
+<p>What should Maria do next?</p>
+<button onclick="checkAnswer('md',false)">Click the link immediately</button>
+<button onclick="checkAnswer('md',false)">Reply to the sender</button>
+<button onclick="checkAnswer('md',true)">Visit the bank website independently</button>
+<button onclick="checkAnswer('md',false)">Ignore the message</button>
+<div id="md"></div></div></section>
+<section class="screen"><div class="card"><div class="casefile">David Scenario</div>
+<p><strong>Review the evidence before making your decision.</strong></p>
+<img src="images/david-payroll.jpg" alt="David payroll email reference">
+<p>What should David do?</p>
+<button onclick="checkAnswer('david',false)">Open the attachment</button>
+<button onclick="checkAnswer('david',false)">Save it for later</button>
+<button onclick="checkAnswer('david',true)">Verify with payroll first</button>
+<button onclick="checkAnswer('david',false)">Forward it to coworkers</button>
+<div id="david"></div></div></section>
+<section class="screen"><div class="card"><h2>Formative Assessment #3</h2>
+<p>You receive an unexpected attachment titled "Updated Benefits Information." What should you do first?</p>
+<button onclick="checkAnswer('f3',false)">Open it immediately</button>
+<button onclick="checkAnswer('f3',true)">Verify the request through a trusted channel</button>
+<button onclick="checkAnswer('f3',false)">Forward it</button>
+<button onclick="checkAnswer('f3',false)">Ignore security warnings</button>
+<div id="f3"></div></div></section>
+<section class="screen"><div class="card"><h2>STOP Process</h2>
+<img src="images/stop.jpg" alt="STOP process">
+<p>A message demands immediate action. What is the FIRST step in the STOP process?</p>
+<button onclick="checkAnswer('stopq',false)">Observe</button>
+<button onclick="checkAnswer('stopq',true)">Stop</button>
+<button onclick="checkAnswer('stopq',false)">Proceed</button>
+<button onclick="checkAnswer('stopq',false)">Report</button>
+<div id="stopq"></div>
+</div></section>
+<section class="screen"><div class="card"><h2>Verification Strategies</h2>
+<p>Which verification method is safest?</p>
+<button onclick="checkAnswer('verify',false)">Reply to the email</button>
+<button onclick="checkAnswer('verify',false)">Call the number in the email</button>
+<button onclick="checkAnswer('verify',true)">Visit the official website directly</button>
+<button onclick="checkAnswer('verify',false)">Click the embedded link</button>
+<div id="verify"></div></div></section>
+<section class="screen"><div class="card"><h2>Report It</h2>
+<p>You receive a suspicious message. What should you do?</p>
+<button onclick="checkAnswer('report',false)">Delete immediately</button>
+<button onclick="checkAnswer('report',false)">Forward to everyone</button>
+<button onclick="checkAnswer('report',true)">Report it to IT/security</button>
+<button onclick="checkAnswer('report',false)">Post it online</button>
+<div id="report"></div></div></section>
+<section class="screen"><div class="card"><h2>Key Takeaways</h2>
+<p>Which action best summarizes what you have learned?</p>
+<button onclick="checkAnswer('takeaway',false)">Click first, verify later</button>
+<button onclick="checkAnswer('takeaway',true)">Pause, verify, and report suspicious messages</button>
+<button onclick="checkAnswer('takeaway',false)">Ignore all emails</button>
+<button onclick="checkAnswer('takeaway',false)">Trust messages with logos</button>
+<div id="takeaway"></div>
+</div></section>
+<section class="screen"><div class="card"><h2>Review Challenge</h2>
+<p><strong>Scenario 1:</strong> Which indicator should concern Maria most?</p>
+<button onclick="checkAnswer('review1',false)">Professional formatting</button>
+<button onclick="checkAnswer('review1',false)">Company logo</button>
+<button onclick="checkAnswer('review1',true)">Urgent account suspension warning</button>
+<button onclick="checkAnswer('review1',false)">Formal greeting</button>
+<div id="review1"></div>
+<hr>
+<p><strong>Scenario 2:</strong> Which piece of evidence should be reviewed first?</p>
+<button onclick="checkAnswer('review2',false)">Email colors</button>
+<button onclick="checkAnswer('review2',true)">Sender information and destination links</button>
+<button onclick="checkAnswer('review2',false)">Message length</button>
+<button onclick="checkAnswer('review2',false)">Branding</button>
+<div id="review2"></div>
+<hr>
+<p><strong>Scenario 3:</strong> What is the safest next action?</p>
+<button onclick="checkAnswer('review3',false)">Open attachment</button>
+<button onclick="checkAnswer('review3',false)">Save attachment</button>
+<button onclick="checkAnswer('review3',true)">Verify through payroll using a trusted channel</button>
+<button onclick="checkAnswer('review3',false)">Forward email</button>
+<div id="review3"></div>
+</div></section>
+<section class="screen"><div class="card"><h2>Extended Practice Studio</h2>
+<p>Complete these timed activities to deepen retention and support one-hour engagement goals.</p>
+<div class="studio-grid">
+<article class="studio-task" id="studio-a"><h3>Task 1: Inbox Triage</h3><p>Review 10 mixed messages and classify each as Legitimate, Suspicious, or Phishing.</p><p class="meta">Target time: 12 minutes</p><button class="secondary" onclick="toggleStudioTask('studio-a',this)">Mark Complete</button></article>
+<article class="studio-task" id="studio-b"><h3>Task 2: Red Flag Hunt</h3><p>Highlight at least 12 phishing indicators across two case screenshots.</p><p class="meta">Target time: 10 minutes</p><button class="secondary" onclick="toggleStudioTask('studio-b',this)">Mark Complete</button></article>
+<article class="studio-task" id="studio-c"><h3>Task 3: Verify and Respond</h3><p>Write safe responses for three suspicious requests using STOP + independent verification.</p><p class="meta">Target time: 14 minutes</p><button class="secondary" onclick="toggleStudioTask('studio-c',this)">Mark Complete</button></article>
+<article class="studio-task" id="studio-d"><h3>Task 4: Reflection Debrief</h3><p>Document your personal phishing checklist and two behavior changes you will adopt.</p><p class="meta">Target time: 8 minutes</p><button class="secondary" onclick="toggleStudioTask('studio-d',this)">Mark Complete</button></article>
+</div>
+<div id="studioFeedback"></div>
+</div></section>
+<section class="screen"><div class="card"><h2>Summative Assessment</h2>
+<p>Passing Score: 80% (8 of 10 correct)<br><br>Answer the questions below and then calculate your score.</p>
+<div id="sumWrap">
+<label>1. Your Microsoft account will be disabled in 30 minutes unless you verify your credentials. What should you do?</label><br>
+<select id="q1"><option>Choose</option><option value="1">Verify through an official company channel</option><option>Click the link immediately</option><option>Reply to the email</option><option>Ignore all future IT emails</option></select><br><br>
+
+<label>2. You receive a text message stating that your package delivery failed and that you must click a link within 24 hours to avoid cancellation. What type of phishing attack is being used?</label><br>
+<select id="q2"><option>Choose</option><option>Email</option><option>Spear</option><option value="1">Smishing</option><option>Vishing</option></select><br><br>
+
+<label>3. A manager emails requesting gift cards while traveling. What should you do first?</label><br>
+<select id="q3"><option>Choose</option><option value="1">Verify the request using an independent communication method</option><option>Purchase the cards immediately</option><option>Reply with gift card numbers</option><option>Forward the request</option></select><br><br>
+
+<label>4. An unexpected payroll update request arrives by email. What is the safest action?</label><br>
+<select id="q4"><option>Choose</option><option>Click the link</option><option value="1">Verify with payroll through a trusted channel</option><option>Update immediately</option><option>Reply asking for more details</option><option>Save the email</option></select><br><br>
+
+<label>5. A caller claiming to be IT support asks for your password. What type of phishing attack is occurring?</label><br>
+<select id="q5"><option>Choose</option><option>Smishing</option><option>Spear Phishing</option><option value="1">Vishing</option><option>Email Phishing</option></select><br><br>
+
+<label>6. Which warning sign should cause the greatest concern?</label><br>
+<select id="q6"><option>Choose</option><option>Professional formatting</option><option value="1">Request for sensitive information</option><option>Company logo</option><option>Formal language</option></select><br><br>
+
+<label>7. A suspicious email includes an unexpected attachment. What should you do?</label><br>
+<select id="q7"><option>Choose</option><option value="1">Verify before interacting with it</option><option>Open it</option><option>Forward it</option><option>Ignore security concerns</option></select><br><br>
+
+<label>8. What is the most reliable verification method?</label><br>
+<select id="q8"><option>Choose</option><option>Reply to email</option><option value="1">Visit official website directly</option><option>Click link</option><option>Call email number</option></select><br><br>
+
+<label>9. You suspect a message is phishing. What should you do?</label><br>
+<select id="q9"><option>Choose</option><option>Ignore</option><option value="1">Report to IT/security</option><option>Forward widely</option><option>Post online</option></select><br><br>
+
+<label>10. Which action best demonstrates phishing awareness?</label><br>
+<select id="q10"><option>Choose</option><option>Click first</option><option value="1">Pause, verify, and report</option><option>Trust logos</option><option>Ignore email</option></select><br><br>
+
+<button onclick="gradeSummative()">Submit Assessment</button>
+</div>
+<div id="quiz"></div></div></section>
+<section class="screen"><div class="card"><h2>Completion Dashboard</h2>
+<p>✓ Defined phishing and its risks</p>
+<p>✓ Identified phishing indicators</p>
+<p>✓ Distinguished legitimate and phishing messages</p>
+<p>✓ Applied verification strategies</p>
+<hr>
+<p>🏆 Threat Detective</p>
+<p>📧 Email Analyst</p>
+<p>🛡 Cyber Defender</p>
+<div class="tracker">
+<h3>Engagement Summary</h3>
+<div id="trackSummary">No tracking data yet.</div>
+<button class="secondary" onclick="exportTracking()">Export Tracking Data</button>
+<button class="secondary" onclick="resetTracking()">Reset Tracking Data</button>
+<div class="snapshot-box">
+<h3>Instructor Snapshot</h3>
+<textarea id="instructorSnapshot" readonly aria-label="Instructor snapshot summary">No snapshot generated yet.</textarea>
+<button class="secondary" onclick="copyInstructorSnapshot()">Copy Snapshot Text</button>
+<div id="snapshotCopyStatus"></div>
+</div>
+</div>
+</div></section>
+<section class="screen"><div class="card"><h2>Certificate of Completion</h2>
+<p><strong>Recognizing and Avoiding Phishing Attacks</strong></p>
+<label for="name">Learner name</label><br>
+<input id="name" placeholder="Enter your name" autocomplete="name">
+<button onclick="cert()">Generate Certificate</button>
+<button id="downloadCert" class="secondary" onclick="downloadCertificate()" disabled>Download or Print Certificate</button>
+<div id="cert"></div></div></section>
+<section class="screen"><div class="card"><h2>Support • Privacy • References</h2><p>Original e-learning module developed by Brittan Cook for WGU D301</p><hr><p><strong>Support & References</strong></p><ul><li><strong>CISA:</strong> Cybersecurity and Infrastructure Security Agency guidance on phishing, email security, and user awareness.</li><li><strong>NIST CSF:</strong> National Institute of Standards and Technology Cybersecurity Framework for identifying, protecting, detecting, responding, and recovering from cyber threats.</li><li><strong>Privacy:</strong> This module uses local browser storage for learning progress and does not transmit learner data externally.</li></ul></div></section>
+
+<div class="nav"><button id="prevBtn" onclick="prev()" aria-label="Go to previous screen">Previous</button><button id="nextBtn" onclick="next()" aria-label="Go to next screen">Next</button></div>
+</main>
+<script>
+const screens=document.querySelectorAll('.screen');
+const questionStats={answered:new Set(),correct:new Set(),streak:0};
+const knowledgeIds=['f1','maria','f2','pkg','md','david','f3','stopq','verify','report','takeaway','review1','review2','review3'];
+const studioCompleted=new Set();
+const phaseConfig=[
+	{title:'Orientation',desc:'Welcome and goals',start:0,end:3},
+	{title:'Foundations',desc:'Core phishing knowledge',start:4,end:8},
+	{title:'Casework',desc:'Evidence-based scenarios',start:9,end:14},
+	{title:'Response Skills',desc:'STOP and reporting',start:15,end:19},
+	{title:'Applied Lab',desc:'Extended practice studio',start:20,end:21},
+	{title:'Certification',desc:'Assessment and completion',start:22,end:24}
+];
+const explanationById={
+	f1:'Smishing combines SMS + phishing. Attackers rely on urgency and short links to reduce careful review.',
+	maria:'Threat language like account suspension is meant to trigger fear. Emotional pressure is a high-risk signal.',
+	f2:'Urgency is dangerous because it reduces deliberate thinking. Safe behavior starts with pausing before action.',
+	pkg:'Legitimate messages are usually specific and align with known activity, while scams often force quick clicks.',
+	md:'Independent verification is safer than using links or contact details from suspicious messages.',
+	david:'Unexpected attachments can contain malware. Verification through a trusted channel protects systems and data.',
+	f3:'Verifying first prevents accidental malware execution and helps confirm whether the request is real.',
+	stopq:'The STOP process starts with interruption. Pausing creates space to evaluate risks before acting.',
+	verify:'Directly typing the official website avoids manipulated links and fake landing pages.',
+	report:'Reporting helps your security team block threats quickly and protect other users.',
+	takeaway:'Strong phishing defense is behavioral: pause, verify independently, then report suspicious content.',
+	review1:'Threat and urgency cues are stronger indicators than logos or formatting because attackers can copy branding.',
+	review2:'Sender domain and link destination are more reliable evidence than visual design elements.',
+	review3:'A second channel verification step defeats most impersonation attempts.'
+};
+const summativeMeta=[
+	{id:'q1',correct:'Verify through an official company channel',explain:'Credential reset threats commonly use urgency. Confirm through your organization directly.'},
+	{id:'q2',correct:'Smishing',explain:'SMS-based phishing is called smishing and often uses delivery or account bait.'},
+	{id:'q3',correct:'Verify the request using an independent communication method',explain:'Executive impersonation scams pressure fast financial actions. Verify through a trusted channel.'},
+	{id:'q4',correct:'Verify with payroll through a trusted channel',explain:'Payroll changes are high risk and should always be confirmed out-of-band.'},
+	{id:'q5',correct:'Vishing',explain:'Voice phishing uses live calls to social-engineer passwords or codes.'},
+	{id:'q6',correct:'Request for sensitive information',explain:'Requests for credentials or financial data are major red flags.'},
+	{id:'q7',correct:'Verify before interacting with it',explain:'Unknown attachments can deliver malware; verify first.'},
+	{id:'q8',correct:'Visit official website directly',explain:'Manual navigation to trusted destinations reduces spoofing risk.'},
+	{id:'q9',correct:'Report to IT/security',explain:'Reporting helps containment and user-wide protection.'},
+	{id:'q10',correct:'Pause, verify, and report',explain:'This sequence applies reliable anti-phishing behavior.'}
+];
+let c=0;
+let narrationOn=false;
+let certificateHtml='';
+const startTime=Date.now();
+let lastScreenIndex=0;
+let lastScreenTs=Date.now();
+const trackingKey='phishingModuleTrackingV1';
+const tracking={
+	version:'1.0',
+	startedAt:new Date().toISOString(),
+	events:[],
+	screenMs:{},
+	questionAttempts:0,
+	questionCorrect:0,
+	studioCompleted:0,
+	navigation:{next:0,prev:0,jump:0,keyboard:0},
+	narrationToggles:0,
+	certificateGenerated:false,
+	certificateDownloaded:false,
+	summativeAttempts:0,
+	lastUpdated:new Date().toISOString()
+};
+
+function nowIso(){
+	return new Date().toISOString();
+}
+
+function persistTracking(){
+	tracking.lastUpdated=nowIso();
+	localStorage.setItem(trackingKey,JSON.stringify(tracking));
+	updateEventCount();
+}
+
+function logEvent(type,data){
+	tracking.events.push({
+		t:type,
+		ts:nowIso(),
+		screen:c+1,
+		data:data||{}
+	});
+	if(tracking.events.length>1000){
+		tracking.events.shift();
+	}
+	persistTracking();
+}
+
+function updateEventCount(){
+	document.getElementById('eventCount').textContent='Events logged: '+tracking.events.length;
+}
+
+function flushScreenTime(){
+	const now=Date.now();
+	const elapsed=Math.max(0,now-lastScreenTs);
+	tracking.screenMs[lastScreenIndex]=(tracking.screenMs[lastScreenIndex]||0)+elapsed;
+	lastScreenTs=now;
+}
+
+function formatMinutes(ms){
+	return Math.round(ms/60000);
+}
+
+function formatMinutesFriendly(ms){
+	if(ms>0&&ms<60000){return '<1';}
+	return String(formatMinutes(ms));
+}
+
+function buildInstructorSnapshot(totalMs,phaseTotals){
+	const totalMin=formatMinutesFriendly(totalMs);
+	const accuracy=tracking.questionAttempts?Math.round((tracking.questionCorrect/tracking.questionAttempts)*100):0;
+	const totalNav=tracking.navigation.next+tracking.navigation.prev+tracking.navigation.jump+tracking.navigation.keyboard;
+	let topPhase='Orientation';
+	let topPhaseMs=-1;
+	Object.keys(phaseTotals).forEach(name=>{
+		if(phaseTotals[name]>topPhaseMs){
+			topPhase=name;
+			topPhaseMs=phaseTotals[name];
+		}
+	});
+	let readiness='In progress';
+	if(tracking.summativeAttempts>0&&tracking.questionAttempts>=10&&tracking.studioCompleted===4){
+		readiness='Assessment-ready';
+	}
+	if(tracking.certificateGenerated){
+		readiness='Completed';
+	}
+	return ''
+		+'Module: Recognizing and Avoiding Phishing Attacks\n'
+		+'Snapshot Time: '+new Date().toLocaleString()+'\n'
+		+'\n'
+		+'Learner Engagement\n'
+		+'- Total active engagement: '+totalMin+' min\n'
+		+'- Most-engaged phase: '+topPhase+' ('+formatMinutesFriendly(topPhaseMs)+' min)\n'
+		+'- Studio tasks completed: '+tracking.studioCompleted+'/4\n'
+		+'\n'
+		+'Performance Indicators\n'
+		+'- Knowledge checks: '+tracking.questionCorrect+'/'+tracking.questionAttempts+' correct ('+accuracy+'%)\n'
+		+'- Summative attempts: '+tracking.summativeAttempts+'\n'
+		+'- Certificate generated: '+(tracking.certificateGenerated?'Yes':'No')+'\n'
+		+'\n'
+		+'Participation Signals\n'
+		+'- Total navigation interactions: '+totalNav+'\n'
+		+'- Narration toggles: '+tracking.narrationToggles+'\n'
+		+'- Logged interactions: '+tracking.events.length+'\n'
+		+'\n'
+		+'Instructor Readiness Note\n'
+		+'- Current status: '+readiness;
+}
+
+function updateTrackingSummary(){
+	const el=document.getElementById('trackSummary');
+	if(!el){return;}
+	flushScreenTime();
+	const totalMs=Object.values(tracking.screenMs).reduce((acc,val)=>acc+val,0);
+	const phaseTotals={};
+	phaseConfig.forEach(phase=>{phaseTotals[phase.title]=0;});
+	Object.keys(tracking.screenMs).forEach(key=>{
+		const idx=Number(key);
+		const ms=tracking.screenMs[key]||0;
+		for(let i=0;i<phaseConfig.length;i++){
+			if(idx>=phaseConfig[i].start&&idx<=phaseConfig[i].end){
+				phaseTotals[phaseConfig[i].title]+=ms;
+				break;
+			}
+		}
+	});
+	let phaseRows='';
+	Object.keys(phaseTotals).forEach(name=>{
+		phaseRows+='<li>'+name+': '+formatMinutesFriendly(phaseTotals[name])+' min</li>';
+	});
+	el.innerHTML=''
+		+'<p><strong>Total active engagement:</strong> '+formatMinutesFriendly(totalMs)+' min</p>'
+		+'<p><strong>Knowledge checks correct:</strong> '+tracking.questionCorrect+' / '+tracking.questionAttempts+'</p>'
+		+'<p><strong>Studio tasks completed:</strong> '+tracking.studioCompleted+' / 4</p>'
+		+'<p><strong>Summative attempts:</strong> '+tracking.summativeAttempts+'</p>'
+		+'<p><strong>Navigation usage:</strong> next '+tracking.navigation.next+', prev '+tracking.navigation.prev+', jump '+tracking.navigation.jump+', keyboard '+tracking.navigation.keyboard+'</p>'
+		+'<p><strong>Phase engagement:</strong></p><ul>'+phaseRows+'</ul>';
+	const snapshotEl=document.getElementById('instructorSnapshot');
+	if(snapshotEl){snapshotEl.value=buildInstructorSnapshot(totalMs,phaseTotals);}
+}
+
+function copyInstructorSnapshot(){
+	const el=document.getElementById('instructorSnapshot');
+	if(!el){return;}
+	el.select();
+	el.setSelectionRange(0,99999);
+	const statusId='snapshotCopyStatus';
+	if(navigator.clipboard&&navigator.clipboard.writeText){
+		navigator.clipboard.writeText(el.value).then(()=>{
+			renderFeedback(statusId,'Instructor snapshot copied to clipboard.',true);
+		}).catch(()=>{
+			document.execCommand('copy');
+			renderFeedback(statusId,'Instructor snapshot copied to clipboard.',true);
+		});
+		return;
+	}
+	document.execCommand('copy');
+	renderFeedback(statusId,'Instructor snapshot copied to clipboard.',true);
+}
+
+function exportTracking(){
+	flushScreenTime();
+	updateTrackingSummary();
+	const payload={...tracking,exportedAt:nowIso(),instructorSnapshot:document.getElementById('instructorSnapshot')?document.getElementById('instructorSnapshot').value:''};
+	const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+	const url=URL.createObjectURL(blob);
+	const a=document.createElement('a');
+	a.href=url;
+	a.download='phishing-module-tracking.json';
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+	URL.revokeObjectURL(url);
+	logEvent('tracking_exported');
+}
+
+function resetTracking(){
+	if(!confirm('Reset all locally stored tracking data for this browser?')){return;}
+	localStorage.removeItem(trackingKey);
+	location.reload();
+}
+
+function loadTracking(){
+	const raw=localStorage.getItem(trackingKey);
+	if(!raw){
+		persistTracking();
+		return;
+	}
+	try{
+		const parsed=JSON.parse(raw);
+		Object.keys(tracking).forEach(k=>{
+			if(parsed[k]!==undefined){tracking[k]=parsed[k];}
+		});
+		logEvent('session_resumed');
+	}catch(err){
+		logEvent('tracking_parse_error',{message:String(err)});
+	}
+}
+
+function firstHeading(el){
+	return el.querySelector('.hero > h1, .hero > h2, .card > h2, .casefile, h3');
+}
+
+function screenLabel(screen,idx){
+	const primary=screen.querySelector('.hero > h1, .hero > h2, .card > h2');
+	if(primary){return primary.textContent.trim();}
+	const caseFile=screen.querySelector('.casefile');
+	if(caseFile){return caseFile.textContent.trim();}
+	const fallbackHeading=screen.querySelector('h3');
+	if(fallbackHeading){return fallbackHeading.textContent.trim();}
+	return 'Screen '+(idx+1);
+}
+
+function setRemainingTime(){
+	const remaining=Math.max(0,Math.ceil((screens.length-(c+1))*2.5));
+	const eta=remaining>1?remaining+' min':remaining===1?'1 min':'< 1 min';
+	document.getElementById('eta').textContent='Estimated remaining: '+eta;
+}
+
+function updateActiveTime(){
+	const elapsed=Math.max(0,Math.floor((Date.now()-startTime)/60000));
+	document.getElementById('activeTime').textContent='Active time: '+elapsed+' min';
+}
+
+function currentPhaseIndex(){
+	for(let i=0;i<phaseConfig.length;i++){
+		if(c>=phaseConfig[i].start&&c<=phaseConfig[i].end){return i;}
+	}
+	return phaseConfig.length-1;
+}
+
+function buildPhaseRail(){
+	const rail=document.getElementById('phaseRail');
+	phaseConfig.forEach((phase,idx)=>{
+		const item=document.createElement('div');
+		item.className='phase-step';
+		item.id='phase-'+idx;
+		item.innerHTML='<strong>'+phase.title+'</strong><span>'+phase.desc+'</span>';
+		rail.appendChild(item);
+	});
+}
+
+function updatePhaseRail(){
+	const active=currentPhaseIndex();
+	phaseConfig.forEach((_,idx)=>{
+		const el=document.getElementById('phase-'+idx);
+		if(!el){return;}
+		el.classList.remove('active','done');
+		if(idx<active){el.classList.add('done');}
+		if(idx===active){el.classList.add('active');}
+	});
+}
+
+function update(){
+	flushScreenTime();
+	lastScreenIndex=c;
+	screens.forEach((s,i)=>s.classList.toggle('active',i===c));
+	label.textContent='Screen '+(c+1)+' of '+screens.length;
+	bar.style.width=((c+1)/screens.length*100)+'%';
+	document.getElementById('prevBtn').disabled=(c===0);
+	document.getElementById('nextBtn').disabled=(c===screens.length-1);
+	document.getElementById('jumpTo').value=String(c);
+	setRemainingTime();
+	const h=firstHeading(screens[c]);
+	if(h){h.setAttribute('tabindex','-1');h.focus();}
+	updatePhaseRail();
+	updateActiveTime();
+	if(firstHeading(screens[c])&&firstHeading(screens[c]).textContent==='Completion Dashboard'){
+		updateTrackingSummary();
+	}
+	if(narrationOn){speakCurrentScreen();}
+}
+
+function next(){if(c<screens.length-1){c++;tracking.navigation.next+=1;logEvent('navigate_next');update();}}
+function prev(){if(c>0){c--;tracking.navigation.prev+=1;logEvent('navigate_prev');update();}}
+
+function renderFeedback(id,text,isCorrect,extraHtml){
+	const cls=isCorrect?'feedback ok':'feedback warn';
+	document.getElementById(id).innerHTML='<div class="'+cls+'">'+text+(extraHtml||'')+'</div>';
+}
+
+function msg(id,t){
+	renderFeedback(id,t,true);
+}
+
+function updateKnowledgePanel(){
+	document.getElementById('knowledge').textContent='Knowledge checks: '+questionStats.correct.size+'/'+questionStats.answered.size;
+	document.getElementById('streak').textContent='Current streak: '+questionStats.streak;
+}
+
+function updateStudioPanel(){
+	document.getElementById('studioProgress').textContent='Studio tasks: '+studioCompleted.size+'/4';
+	tracking.studioCompleted=studioCompleted.size;
+	persistTracking();
+}
+
+function toggleStudioTask(taskId,btn){
+	if(studioCompleted.has(taskId)){
+		studioCompleted.delete(taskId);
+		btn.textContent='Mark Complete';
+		btn.classList.add('secondary');
+	}else{
+		studioCompleted.add(taskId);
+		btn.textContent='Completed';
+		btn.classList.remove('secondary');
+		btn.classList.add('correct');
+	}
+	updateStudioPanel();
+	if(studioCompleted.size===4){
+		renderFeedback('studioFeedback','Excellent work. You completed the full practice studio and achieved the extended engagement target.',true);
+	}else{
+		renderFeedback('studioFeedback','Studio progress saved: '+studioCompleted.size+' of 4 tasks complete.',true);
+	}
+	logEvent('studio_task_toggled',{taskId:taskId,complete:studioCompleted.has(taskId)});
+}
+
+function gradeSummative(){
+	let score=0;
+	let unanswered=0;
+	let review='';
+	for(let i=1;i<=10;i++){
+		const select=document.getElementById('q'+i);
+		const v=select.value;
+		const selectedText=select.options[select.selectedIndex].text;
+		const meta=summativeMeta[i-1];
+		if(v==='Choose'){unanswered++;}
+		if(v==='1'){score++;}
+		const itemCorrect=v==='1';
+		review+='<li><strong>Q'+i+': '+(itemCorrect?'Correct':'Review needed')+'</strong><br>Your answer: '+selectedText+'<br>Best answer: '+meta.correct+'<br>Why: '+meta.explain+'</li>';
+	}
+	const pct=Math.round(score*10);
+	const pass=pct>=80;
+	let status='PASS';
+	if(!pass){status='NOT YET MASTERED';}
+	const notes=unanswered?'<br>Unanswered items: '+unanswered:'';
+	document.getElementById('quiz').innerHTML='<div class="feedback '+(pass?'ok':'warn')+'"><strong>Score: '+pct+'%</strong><br>Status: '+status+notes+'<br><br><strong>Answer Review</strong><ol>'+review+'</ol><button class="secondary" onclick="location.reload()">Retake Assessment</button></div>';
+	tracking.summativeAttempts+=1;
+	logEvent('summative_submitted',{score:pct,pass:pass,unanswered:unanswered});
+}
+
+function checkAnswer(id,correct){
+	const fb={
+		f1:['Correct. Smishing attacks use text messages and often exploit common situations such as package deliveries.','Not quite. This scenario is delivered through a text message, making it smishing.'],
+		f2:['Correct. Urgency is one of the most common phishing tactics because it pressures users to act before verifying.','Not quite. The biggest concern is the pressure to act immediately.'],
+		f3:['Correct. Verification through a trusted channel reduces the risk of malware and fraud.','Not quite. Unexpected attachments should be verified before interacting with them.'],
+		review1:['Correct. Urgent threats are a classic phishing tactic.','Not quite. The urgency and threat of account suspension are the strongest indicators.'],
+		review2:['Correct. Sender details and links provide the most useful evidence.','Not quite. Start by evaluating sender information and destination links.'],
+		review3:['Correct. Independent verification is the safest response.','Not quite. Verification through payroll is safer than interacting with the email.']
+	};
+	let text=correct?'Correct. Well done.':'Not quite. Review the content and try again.';
+	if(fb[id]){text=correct?fb[id][0]:fb[id][1];}
+	if(id==='stopq'&&correct){text='Correct. The STOP process begins by pausing before taking action.';}
+	if(id==='takeaway'&&correct){text='Correct. Effective phishing prevention depends on pausing, verifying, and reporting.';}
+
+	const sourceBtn=(window.event&&window.event.target&&window.event.target.tagName==='BUTTON')?window.event.target:null;
+	if(sourceBtn){
+		sourceBtn.classList.remove('secondary');
+		sourceBtn.classList.add(correct?'correct':'incorrect');
+	}
+
+	const firstAttempt=!questionStats.answered.has(id);
+	if(firstAttempt&&knowledgeIds.includes(id)){
+		questionStats.answered.add(id);
+		if(correct){questionStats.correct.add(id);questionStats.streak+=1;}else{questionStats.streak=0;}
+		tracking.questionAttempts+=1;
+		if(correct){tracking.questionCorrect+=1;}
+		logEvent('knowledge_check_answered',{id:id,correct:correct});
+		updateKnowledgePanel();
+	}
+	const why=explanationById[id]?'<details class="explain"><summary>Why this matters</summary><p>'+explanationById[id]+'</p></details>':'';
+	renderFeedback(id,text,correct,why);
+}
+
+function cert(){
+	const n=(document.getElementById('name').value||'Learner').trim();
+	const d=new Date().toLocaleDateString();
+	certificateHtml='<div style="max-width:780px;margin:auto;border:4px solid #114e59;border-radius:16px;padding:24px;font-family:Georgia,\"Times New Roman\",serif;background:#fff"><h2 style="text-align:center;margin:0 0 8px">Certificate of Completion</h2><p style="text-align:center;margin:0 0 18px">Recognizing and Avoiding Phishing Attacks</p><p>This certifies that</p><p style="font-size:1.4rem;margin:8px 0"><strong>'+n+'</strong></p><p>has successfully completed the phishing awareness module.</p><p>Date: '+d+'</p><p style="margin-top:22px">Original e-learning module developed by Brittan Cook for WGU D299</p></div>';
+	document.getElementById('cert').innerHTML='<div class="feedback ok">'+certificateHtml+'</div>';
+	document.getElementById('downloadCert').disabled=false;
+	tracking.certificateGenerated=true;
+	logEvent('certificate_generated',{name:n});
+}
+
+function downloadCertificate(){
+	if(!certificateHtml){return;}
+	const printWindow=window.open('','_blank','width=900,height=700');
+	if(!printWindow){return;}
+	printWindow.document.write('<!DOCTYPE html><html><head><title>Certificate</title><style>body{margin:24px;font-family:Georgia,"Times New Roman",serif;background:#fff} @page{size:letter;margin:0.5in}</style></head><body>'+certificateHtml+'<script>window.onload=function(){window.print();};</'+'script></body></html>');
+	printWindow.document.close();
+	tracking.certificateDownloaded=true;
+	logEvent('certificate_downloaded');
+}
+
+function getNarrationText(screen){
+	const heading=screen.querySelector('h1,h2,h3');
+	const chunks=[];
+	if(heading){chunks.push(heading.textContent.trim()+'.');}
+	screen.querySelectorAll('p,li,label').forEach(el=>{
+		const text=el.textContent.trim();
+		if(text){chunks.push(text);}
+	});
+	return chunks.join(' ').replace(/\s+/g,' ').slice(0,1600);
+}
+
+function speakCurrentScreen(){
+	if(!('speechSynthesis' in window)){return;}
+	window.speechSynthesis.cancel();
+	const text=getNarrationText(screens[c]);
+	if(!text){return;}
+	const utter=new SpeechSynthesisUtterance(text);
+	utter.rate=1;
+	utter.pitch=1;
+	window.speechSynthesis.speak(utter);
+}
+
+function toggleNarration(){
+	narrationOn=!narrationOn;
+	const btn=document.getElementById('narrateToggle');
+	btn.textContent='Narration: '+(narrationOn?'On':'Off');
+	btn.setAttribute('aria-pressed',narrationOn?'true':'false');
+	tracking.narrationToggles+=1;
+	logEvent('narration_toggled',{on:narrationOn});
+	if(narrationOn){
+		speakCurrentScreen();
+	}else if('speechSynthesis' in window){
+		window.speechSynthesis.cancel();
+	}
+}
+
+function buildJumpMenu(){
+	const jump=document.getElementById('jumpTo');
+	screens.forEach((screen,idx)=>{
+		const labelText=screenLabel(screen,idx);
+		const opt=document.createElement('option');
+		opt.value=String(idx);
+		opt.textContent=(idx+1)+'. '+labelText;
+		jump.appendChild(opt);
+	});
+	jump.addEventListener('change',e=>{c=Number(e.target.value);tracking.navigation.jump+=1;logEvent('navigate_jump',{to:c+1});update();});
+}
+
+function prepareAccessibleFeedback(){
+	const targets=['poll','f1','maria','f2','pkg','md','david','f3','stopq','verify','report','takeaway','review1','review2','review3','quiz','cert','snapshotCopyStatus'];
+	targets.forEach(id=>{
+		const el=document.getElementById(id);
+		if(el){el.setAttribute('role','status');el.setAttribute('aria-live','polite');}
+	});
+}
+
+document.addEventListener('keydown',e=>{
+	if(e.target&&['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)){return;}
+	if(e.key==='ArrowRight'){tracking.navigation.keyboard+=1;next();}
+	if(e.key==='ArrowLeft'){tracking.navigation.keyboard+=1;prev();}
+	if(e.key==='Home'){tracking.navigation.keyboard+=1;c=0;logEvent('navigate_home');update();}
+	if(e.key==='End'){tracking.navigation.keyboard+=1;c=screens.length-1;logEvent('navigate_end');update();}
+	if(e.key.toLowerCase()==='n'){toggleNarration();}
+});
+
+window.addEventListener('beforeunload',()=>{
+	flushScreenTime();
+	persistTracking();
+});
+
+loadTracking();
+buildJumpMenu();
+buildPhaseRail();
+prepareAccessibleFeedback();
+updateKnowledgePanel();
+updateStudioPanel();
+setInterval(updateActiveTime,30000);
+update();
+</script>
+</body></html>
